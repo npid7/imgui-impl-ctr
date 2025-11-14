@@ -39,3 +39,5 @@ IMGUI_IMPL_API void ImGui_ImplCitro3D_NewFrame();
 /// @param t_bot Bottom Screen Target
 IMGUI_IMPL_API void ImGui_ImplCitro3D_RenderDrawData(ImDrawData* draw_data,
                                                      void* t_top, void* t_bot);
+/// @brief Internal font texture load function
+IMGUI_IMPL_API void ImGui_ImplCitro3D_LoadFontTextures();

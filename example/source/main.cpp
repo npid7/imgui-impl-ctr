@@ -119,10 +119,10 @@ int main() {
   auto& style = ImGui::GetStyle();
   style.ScaleAllSizes(0.5f);
   io.IniFilename = nullptr;
-
   ImGui_ImplCtr_Init();
   ImGui_ImplCitro3D_Init();
-
+  // io.Fonts->AddFontFromFileTTF("romfs:/ComicNeue.ttf", 24);
+  
   NpiEasyTex ntex;
   NpiEasyTexLoad(ntex, "romfs:/gfx/test.t3x");
 

@@ -2,6 +2,7 @@
 // implementation Link: https://github.com/mtheall/ftpd/blob/master/source/3ds/
 // Shader
 #include "imgui_impl_citro3d.h"
+
 #include <3ds.h>
 #include <citro3d.h>
 
@@ -31,7 +32,7 @@
 struct ImGui_ImplCitro3D_Backend_Data {
   /* Data */
   // Shader
-  DVLB_s *shader = nullptr;
+  DVLB_s* shader = nullptr;
   shaderProgram_s shader_program;
   C3D_AttrInfo attr_info;
 
@@ -42,25 +43,26 @@ struct ImGui_ImplCitro3D_Backend_Data {
 
   // System Font and TextScale
   std::vector<C3D_Tex> FontTextures;
+  C3D_Tex* ImGuiFontTex = nullptr;
   float text_scale;
   // 3DS font glyph ranges
   std::vector<ImWchar> FontRanges;
 
   // Data stuff
   unsigned int boundScissor[4];
-  ImDrawVert *boundVertexData;
-  C3D_Tex *boundTexture;
+  ImDrawVert* boundVertexData;
+  C3D_Tex* boundTexture;
 
   // Render Data
-  ImDrawVert *VertexData = nullptr;
+  ImDrawVert* VertexData = nullptr;
   std::size_t VertexSize = 0;
-  ImDrawIdx *IndexData = nullptr;
+  ImDrawIdx* IndexData = nullptr;
   std::size_t IndexSize = 0;
 };
 
-static ImGui_ImplCitro3D_Backend_Data *ImGui_ImplCitro3D_GetBackendData() {
+static ImGui_ImplCitro3D_Backend_Data* ImGui_ImplCitro3D_GetBackendData() {
   return ImGui::GetCurrentContext()
-             ? (ImGui_ImplCitro3D_Backend_Data *)ImGui::GetIO()
+             ? (ImGui_ImplCitro3D_Backend_Data*)ImGui::GetIO()
                    .BackendRendererUserData
              : nullptr;
 }
@@ -76,7 +78,7 @@ static ImGui_ImplCitro3D_Backend_Data *ImGui_ImplCitro3D_GetBackendData() {
 ///@brief Get code point from glyph index
 ///@param font Font to search
 ///@param glyphIndex Glyph index
-unsigned int fontCodePointFromGlyphIndex(CFNT_s *const font,
+unsigned int fontCodePointFromGlyphIndex(CFNT_s* const font,
                                          int const glyphIndex) {
   for (auto cmap = fontGetInfo(font)->cmap; cmap; cmap = cmap->next) {
     switch (cmap->mappingMethod) {
@@ -135,14 +137,14 @@ void SetupRendererForScreen(const gfxScreen_t screen) {
 }
 
 IMGUI_IMPL_API bool ImGui_ImplCitro3D_Init(bool load_sysfont) {
-  auto &io = ImGui::GetIO();
+  auto& io = ImGui::GetIO();
 
   NPI_ASSERT(io.BackendRendererUserData == nullptr &&
              "Already initialized a renderer backend!");
 
   // Setup backend capabilities flags
-  ImGui_ImplCitro3D_Backend_Data *bd = IM_NEW(ImGui_ImplCitro3D_Backend_Data)();
-  io.BackendRendererUserData = reinterpret_cast<void *>(bd);
+  ImGui_ImplCitro3D_Backend_Data* bd = IM_NEW(ImGui_ImplCitro3D_Backend_Data)();
+  io.BackendRendererUserData = reinterpret_cast<void*>(bd);
 
   io.BackendRendererName = "imgui_impl_citro3d";
   io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
@@ -150,7 +152,7 @@ IMGUI_IMPL_API bool ImGui_ImplCitro3D_Init(bool load_sysfont) {
   auto bknd_data = ImGui_ImplCitro3D_GetBackendData();
 
   bknd_data->shader = DVLB_ParseFile(
-      const_cast<u32 *>(reinterpret_cast<const u32 *>(imgui_impl_c3d_shbin)),
+      const_cast<u32*>(reinterpret_cast<const u32*>(imgui_impl_c3d_shbin)),
       imgui_impl_c3d_shbin_size);
 
   shaderProgramInit(&bknd_data->shader_program);
@@ -160,19 +162,20 @@ IMGUI_IMPL_API bool ImGui_ImplCitro3D_Init(bool load_sysfont) {
       bknd_data->shader_program.vertexShader, "projection");
 
   AttrInfo_Init(&bd->attr_info);
-  AttrInfo_AddLoader(&bd->attr_info, 0, GPU_FLOAT, 2);          // inPosition aka v0
-  AttrInfo_AddLoader(&bd->attr_info, 1, GPU_FLOAT, 2);          // inTexcoord aka v1
-  AttrInfo_AddLoader(&bd->attr_info, 2, GPU_UNSIGNED_BYTE, 4);  // inColor aka v2
+  AttrInfo_AddLoader(&bd->attr_info, 0, GPU_FLOAT, 2);  // inPosition aka v0
+  AttrInfo_AddLoader(&bd->attr_info, 1, GPU_FLOAT, 2);  // inTexcoord aka v1
+  AttrInfo_AddLoader(&bd->attr_info, 2, GPU_UNSIGNED_BYTE,
+                     4);  // inColor aka v2
 
   // linear alloc Vertex Data
   bknd_data->VertexSize = 65536;
-  bknd_data->VertexData = reinterpret_cast<ImDrawVert *>(
+  bknd_data->VertexData = reinterpret_cast<ImDrawVert*>(
       linearAlloc(sizeof(ImDrawVert) * bknd_data->VertexSize));
   NPI_ASSERT(bknd_data->VertexData);
 
   // linear alloc Index Data
   bknd_data->IndexSize = 65536;
-  bknd_data->IndexData = reinterpret_cast<ImDrawIdx *>(
+  bknd_data->IndexData = reinterpret_cast<ImDrawIdx*>(
       linearAlloc(sizeof(ImDrawIdx) * bknd_data->IndexSize));
   NPI_ASSERT(bknd_data->IndexData);
 
@@ -190,7 +193,7 @@ IMGUI_IMPL_API bool ImGui_ImplCitro3D_Init(bool load_sysfont) {
   bknd_data->text_scale = 30.0f / glyphInfo->cellHeight;
 
   for (unsigned i = 0; i < glyphInfo->nSheets; i++) {
-    auto &tex = bknd_data->FontTextures[i];
+    auto& tex = bknd_data->FontTextures[i];
     tex.data = fontGetGlyphSheetTex(font, i);
     NPI_ASSERT(tex.data);
 
@@ -205,7 +208,7 @@ IMGUI_IMPL_API bool ImGui_ImplCitro3D_Init(bool load_sysfont) {
     tex.lodParam = 0;
   }
   // Generate ImGui's white pixel texture
-  auto &tex = bknd_data->FontTextures[glyphInfo->nSheets];
+  auto& tex = bknd_data->FontTextures[glyphInfo->nSheets];
   C3D_TexInit(&tex, 8, 8, GPU_A4);
 
   uint32_t size;
@@ -290,7 +293,7 @@ IMGUI_IMPL_API bool ImGui_ImplCitro3D_Init(bool load_sysfont) {
   atlas->TexUvWhitePixel =
       ImVec2(0.5f * 0.125f, glyphInfo->nSheets + 0.5f * 0.125f);
   atlas->TexPixelsAlpha8 =
-      static_cast<unsigned char *>(IM_ALLOC(1));  // dummy allocation
+      static_cast<unsigned char*>(IM_ALLOC(1));  // dummy allocation
 
   // Setup Font Config
   ImFontConfig config;
@@ -335,7 +338,7 @@ IMGUI_IMPL_API bool ImGui_ImplCitro3D_Init(bool load_sysfont) {
   imFont->Descent = 0.0f;
 
   fontGlyphPos_s glyphPos;
-  for (auto const &code : charSet) {
+  for (auto const& code : charSet) {
     auto const glyphIndex = fontGlyphIndexFromCodePoint(font, code);
     NPI_ASSERT(glyphIndex >= 0);
     NPI_ASSERT(glyphIndex < 0xFFFF);
@@ -372,12 +375,15 @@ IMGUI_IMPL_API void ImGui_ImplCitro3D_Shutdown() {
 }
 
 IMGUI_IMPL_API void ImGui_ImplCitro3D_NewFrame() {
-  ImGui_ImplCitro3D_Backend_Data *bd = ImGui_ImplCitro3D_GetBackendData();
+  ImGui_ImplCitro3D_Backend_Data* bd = ImGui_ImplCitro3D_GetBackendData();
   NPI_ASSERT(bd != nullptr && "Did you call ImGui_ImplCitro3D_Init()?");
+  /*if (!bd->ImGuiFontTex) {
+    ImGui_ImplCitro3D_LoadFontTextures();
+  }*/
 }
 
-IMGUI_IMPL_API void ImGui_ImplCitro3D_RenderDrawData(ImDrawData *draw_data,
-                                                     void *t_top, void *t_bot) {
+IMGUI_IMPL_API void ImGui_ImplCitro3D_RenderDrawData(ImDrawData* draw_data,
+                                                     void* t_top, void* t_bot) {
   if (draw_data->CmdListsCount <= 0) return;
 
   auto bknd_data = ImGui_ImplCitro3D_GetBackendData();
@@ -395,14 +401,14 @@ IMGUI_IMPL_API void ImGui_ImplCitro3D_RenderDrawData(ImDrawData *draw_data,
   if (bknd_data->VertexSize < static_cast<size_t>(draw_data->TotalVtxCount)) {
     linearFree(bknd_data->VertexData);
     bknd_data->VertexSize = draw_data->TotalVtxCount * 1.1f;
-    bknd_data->VertexData = reinterpret_cast<ImDrawVert *>(
+    bknd_data->VertexData = reinterpret_cast<ImDrawVert*>(
         linearAlloc(sizeof(ImDrawVert) * bknd_data->VertexSize));
     NPI_ASSERT(bknd_data->VertexData);
   }
   if (bknd_data->IndexSize < static_cast<size_t>(draw_data->TotalIdxCount)) {
     linearFree(bknd_data->IndexData);
     bknd_data->IndexSize = draw_data->TotalIdxCount * 1.1f;
-    bknd_data->IndexData = reinterpret_cast<ImDrawIdx *>(
+    bknd_data->IndexData = reinterpret_cast<ImDrawIdx*>(
         linearAlloc(sizeof(ImDrawIdx) * bknd_data->IndexSize));
     NPI_ASSERT(bknd_data->IndexData);
   }
@@ -413,7 +419,7 @@ IMGUI_IMPL_API void ImGui_ImplCitro3D_RenderDrawData(ImDrawData *draw_data,
   size_t VertexOffset = 0;
   size_t IndexOffset = 0;
   for (int i = 0; i < draw_data->CmdListsCount; i++) {
-    const auto &cmdlist = *draw_data->CmdLists[i];
+    const auto& cmdlist = *draw_data->CmdLists[i];
     NPI_ASSERT(bknd_data->VertexSize - VertexOffset >=
                static_cast<size_t>(cmdlist.VtxBuffer.Size));
     NPI_ASSERT(bknd_data->IndexSize - IndexOffset >=
@@ -428,11 +434,11 @@ IMGUI_IMPL_API void ImGui_ImplCitro3D_RenderDrawData(ImDrawData *draw_data,
     IndexOffset += cmdlist.IdxBuffer.Size;
   }
 
-  for (const auto &it : {GFX_TOP, GFX_BOTTOM}) {
+  for (const auto& it : {GFX_TOP, GFX_BOTTOM}) {
     if (it == GFX_TOP)
-      C3D_FrameDrawOn(reinterpret_cast<C3D_RenderTarget *>(t_top));
+      C3D_FrameDrawOn(reinterpret_cast<C3D_RenderTarget*>(t_top));
     else
-      C3D_FrameDrawOn(reinterpret_cast<C3D_RenderTarget *>(t_bot));
+      C3D_FrameDrawOn(reinterpret_cast<C3D_RenderTarget*>(t_bot));
 
     SetupRendererForScreen(it);
 
@@ -440,8 +446,8 @@ IMGUI_IMPL_API void ImGui_ImplCitro3D_RenderDrawData(ImDrawData *draw_data,
     IndexOffset = 0;
 
     for (int i = 0; i < draw_data->CmdListsCount; i++) {
-      const auto &cmdlist = *draw_data->CmdLists[i];
-      for (const auto &cmd : cmdlist.CmdBuffer) {
+      const auto& cmdlist = *draw_data->CmdLists[i];
+      for (const auto& cmd : cmdlist.CmdBuffer) {
         if (cmd.UserCallback) {
           // user callback, registered via ImDrawList::AddCallback()
           // (ImDrawCallback_ResetRenderState is a special callback value used
@@ -533,7 +539,7 @@ IMGUI_IMPL_API void ImGui_ImplCitro3D_RenderDrawData(ImDrawData *draw_data,
           }
 
           // Check if Bound Texture needs to be updated
-          auto tex = static_cast<C3D_Tex *>(cmd.TextureId);
+          auto tex = static_cast<C3D_Tex*>(cmd.TextureId);
           if (tex == bknd_data->FontTextures.data()) {
             NPI_ASSERT(cmd.ElemCount % 3 == 0);
 
@@ -636,4 +642,17 @@ IMGUI_IMPL_API void ImGui_ImplCitro3D_RenderDrawData(ImDrawData *draw_data,
       IndexOffset += cmdlist.IdxBuffer.Size;
     }
   }
+}
+
+IMGUI_IMPL_API void ImGui_ImplCitro3D_LoadFontTextures() {
+  ImGui_ImplCitro3D_Backend_Data* bd = ImGui_ImplCitro3D_GetBackendData();
+  NPI_ASSERT(bd != nullptr && "Did you call ImGui_ImplCitro3D_Init()?");
+  ImGuiIO& io = ImGui::GetIO();
+  unsigned char* pixels;
+  int width, height;
+  // clang-format off
+  io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);   // Load as RGBA 32-bit (75% of the memory is wasted, but default font is so small) because it is more likely to be compatible with user's existing shaders. If your ImTextureId represent a higher-level concept than just a GL texture id, consider calling GetTexDataAsAlpha8() instead to save on GPU memory.
+  // clang-format on
+  NPI_ASSERT((width <= 1024 && height <= 1024) &&
+             "ImGuiCitro3D_LoadFont: Max Tex size is 1024x1024!");
 }

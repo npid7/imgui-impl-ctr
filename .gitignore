@@ -36,3 +36,8 @@
 
 # Spritesheets
 *.t3x
+
+build/
+
+# MACOS :(
+.DS_Store
