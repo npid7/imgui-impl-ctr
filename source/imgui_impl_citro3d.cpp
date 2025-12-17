@@ -1,8 +1,6 @@
 // This Backend is heavily based on mtheall's ftpd citro3d and ctr
 // implementation Link: https://github.com/mtheall/ftpd/blob/master/source/3ds/
 // Shader
-#include "imgui_impl_citro3d.h"
-
 #include <3ds.h>
 #include <citro3d.h>
 
@@ -15,6 +13,7 @@
 #include <vector>
 
 #include "imgui_impl_c3d_shbin.h"
+#include "imgui_impl_citro3d.h"
 
 #ifdef IM_IMPL_C3D_NPI_ASSERT
 #define NPI_ASSERT(expr)                                                  \
@@ -69,8 +68,8 @@ static ImGui_ImplCitro3D_Backend_Data* ImGui_ImplCitro3D_GetBackendData() {
 
 // FastAccess
 /**
- * bknd_data->
  * auto bknd_data = ImGui_ImplCitro3D_GetBackendData();
+ * bknd_data->
  */
 
 // Helper Functions
@@ -118,10 +117,11 @@ void SetupRendererForScreen(const gfxScreen_t screen) {
   bknd_data->boundTexture = nullptr;
 
   // Bind Shader
-  C3D_BindProgram(&bknd_data->shader_program);
+  // C3D_BindProgram(&bknd_data->shader_program);
+  shaderProgramUse(&bknd_data->shader_program);
   C3D_SetAttrInfo(&bknd_data->attr_info);
 
-  C3D_DepthTest(true, GPU_GREATER, GPU_WRITE_COLOR);
+  C3D_DepthTest(false, GPU_GREATER, GPU_WRITE_COLOR);
   C3D_AlphaBlend(GPU_BLEND_ADD, GPU_BLEND_ADD, GPU_SRC_ALPHA,
                  GPU_ONE_MINUS_SRC_ALPHA, GPU_SRC_ALPHA,
                  GPU_ONE_MINUS_SRC_ALPHA);
